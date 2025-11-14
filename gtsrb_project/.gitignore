@@ -25,7 +25,7 @@ checkpoints/
 *.ckpt
 
 # Generated files
-correct_samples/
+# correct_samples/  # Commented out - we want to include this folder
 logs/
 *.log
 

@@ -51,3 +51,6 @@ GTSRB_data/
 *.png
 *.jpg
 *.jpeg
+
+# Exception: Include correct_samples CSV files
+!gtsrb_project/correct_samples/*.csv
