@@ -168,6 +168,20 @@ class InteractiveTester:
         if len(correct_indices) == 0:
             raise ValueError(f"No samples found for class {class_id}")
 
+        # IMPORTANT: Filter out invalid indices (in case dataset is smaller than expected)
+        dataset_size = len(self.test_dataset)
+        valid_indices = [idx for idx in correct_indices if idx < dataset_size]
+
+        if len(valid_indices) < len(correct_indices):
+            print(f"  Warning: Filtered {len(correct_indices) - len(valid_indices)} invalid indices")
+            print(f"  Dataset size: {dataset_size}, Max index in CSV: {max(correct_indices)}")
+
+        if len(valid_indices) == 0:
+            raise ValueError(f"No valid samples found for class {class_id} (dataset too small?)")
+
+        # Use valid indices only
+        correct_indices = valid_indices
+
         # Random selection if sample_idx not provided
         if sample_idx is None:
             sample_idx = random.randint(0, len(correct_indices) - 1)
