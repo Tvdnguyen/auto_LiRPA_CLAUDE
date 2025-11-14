@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python critical_component_finder.py:*)",
+      "Bash(python3:*)",
+      "Bash(/usr/bin/python3:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
