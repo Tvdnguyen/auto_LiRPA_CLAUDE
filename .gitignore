@@ -37,14 +37,16 @@ env/
 # Large library files
 *.dylib
 
-# PyTorch model checkpoints
+# PyTorch model checkpoints (exclude large ones)
 *.pth
-checkpoints/
+# Exception: Include the main checkpoint (17MB, under 100MB limit)
+!gtsrb_project/checkpoints/traffic_sign_net_full.pth
 
-# Data directories
+# Data directories (too large for git)
 data/
 GTSRB/
 GTSRB_data/
+# Note: Users need to download GTSRB dataset separately
 
 # Results and visualizations
 *.csv

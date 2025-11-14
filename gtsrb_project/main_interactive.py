@@ -13,6 +13,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 import csv
+import random
 
 # Add parent directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -143,17 +144,17 @@ class InteractiveTester:
 
         raise ValueError(f"Invalid layer index: {layer_idx}")
 
-    def get_sample_from_class(self, class_id, sample_idx=0, correct_samples_dir='correct_samples'):
+    def get_sample_from_class(self, class_id, sample_idx=None, correct_samples_dir='correct_samples'):
         """
-        Get a specific sample from a class
+        Get a random sample from a class (from correct_samples)
 
         Args:
             class_id: Class ID (0-42)
-            sample_idx: Index within correctly classified samples for this class
+            sample_idx: If None, randomly select. If provided, use specific index.
             correct_samples_dir: Directory with correct sample indices
 
         Returns:
-            image tensor, label, global_idx
+            image tensor, label, global_idx, sample_idx
         """
         # Load correct indices for this class
         try:
@@ -167,14 +168,19 @@ class InteractiveTester:
         if len(correct_indices) == 0:
             raise ValueError(f"No samples found for class {class_id}")
 
-        if sample_idx >= len(correct_indices):
-            print(f"Warning: Sample index {sample_idx} out of range. Using index 0.")
-            sample_idx = 0
+        # Random selection if sample_idx not provided
+        if sample_idx is None:
+            sample_idx = random.randint(0, len(correct_indices) - 1)
+            print(f"  Randomly selected index {sample_idx} from {len(correct_indices)} correct samples")
+        else:
+            if sample_idx >= len(correct_indices):
+                print(f"Warning: Sample index {sample_idx} out of range. Using index 0.")
+                sample_idx = 0
 
         global_idx = correct_indices[sample_idx]
         image, label = self.test_dataset[global_idx]
 
-        return image, label, global_idx
+        return image, label, global_idx, sample_idx
 
     def compute_clean_output(self, image):
         """
@@ -303,11 +309,14 @@ class InteractiveTester:
                     print("Class ID must be between 0 and 42")
                     continue
 
-                sample_idx = int(input(f"Select sample index within class (default 0): ") or "0")
+                # Automatically select random sample from correct_samples
+                print(f"\nLoading random correct sample from class {class_id}...")
+                image, label, global_idx, sample_idx = self.get_sample_from_class(class_id, sample_idx=None)
 
-                image, label, global_idx = self.get_sample_from_class(class_id, sample_idx)
                 print(f"\nLoaded sample:")
-                print(f"  Global index: {global_idx}")
+                print(f"  Class: {class_id}")
+                print(f"  Sample index within class: {sample_idx}")
+                print(f"  Global test set index: {global_idx}")
                 print(f"  True label: {label}")
 
             except Exception as e:
