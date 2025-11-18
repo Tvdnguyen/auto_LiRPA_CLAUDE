@@ -1,58 +1,100 @@
-tmp
-build
-__pycache__
-*.egg-info
-dist
+# ============================================================================
+# Git Configuration for Intermediate Layer Perturbation Analysis
+# ============================================================================
+# This project includes only:
+# - gtsrb_small_tensor_project/  (our implementation)
+# - scalesim_fault_simulator/    (modified from SCALE-Sim)
+#
+# Source repositories (auto_LiRPA, gtsrb_project, systolic_fault_sim) are excluded
+# ============================================================================
+
+# ===== Exclude Original Source Repositories =====
+# Users should clone these separately (see README.md)
+auto_LiRPA/
+gtsrb_project/
+systolic_fault_sim/
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ===== Virtual Environment =====
+gtsrb_env/
+venv/
+env/
+ENV/
+.venv/
+
+# ===== IDE =====
+.vscode/
+.idea/
 *.swp
 *.swo
+*~
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== Model Checkpoints =====
+*.pth
+*.pt
+*.ckpt
+*.h5
+*.pkl
+*.pickle
+
+# Exception: Include specific checkpoint if under 100MB
+!gtsrb_small_tensor_project/checkpoints/*.pth
+
+# ===== Dataset =====
+GTSRB/
+GTSRB_data/
+data/
+# Note: Users need to download GTSRB dataset separately
+
+# ===== Results and Logs =====
 *.log
+*.txt
+results/
+outputs/
+tmp/
+temp/
+
+# ===== Visualizations =====
+*.png
+*.jpg
+*.jpeg
+*.pdf
+
+# ===== CSV Files =====
+*.csv
+# Exception: Include specific CSV files
+!gtsrb_small_tensor_project/correct_samples/*.csv
+
+# ===== Jupyter =====
+.ipynb_checkpoints/
+*.ipynb
+
+# ===== Compiled Files =====
+*.compiled
+*.dylib
+*.out
+
+# ===== Other =====
 .trace_graph
 Verified_ret*.npy
 Verified-acc*.npy
 vnn-comp_*.npz
 *.tar.gz
 verifier_log_*
-.vscode/
-*.pt
-.idea
-*.so
-release
-*.compiled
-.DS_Store
-*.out
-*.txt
-release
-release_abcrown
-cachier
-out.csv
-results.csv
-
-# Virtual environments
-gtsrb_env/
-venv/
-ENV/
-env/
-.venv/
-
-# Large library files
-*.dylib
-
-# PyTorch model checkpoints (exclude large ones)
-*.pth
-# Exception: Include the main checkpoint (17MB, under 100MB limit)
-!gtsrb_project/checkpoints/traffic_sign_net_full.pth
-
-# Data directories (too large for git)
-data/
-GTSRB/
-GTSRB_data/
-# Note: Users need to download GTSRB dataset separately
-
-# Results and visualizations
-*.csv
-*.png
-*.jpg
-*.jpeg
-
-# Exception: Include correct_samples CSV files
-!gtsrb_project/correct_samples/*.csv
+cachier/
+release/
+release_abcrown/

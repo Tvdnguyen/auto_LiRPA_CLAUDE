@@ -1,258 +1,294 @@
-# auto_LiRPA: Automatic Linear Relaxation based Perturbation Analysis for Neural Networks
+# Intermediate Layer Perturbation Analysis for DNN Verification
 
-[![Documentation Status](https://readthedocs.org/projects/auto-lirpa/badge/?version=latest)](https://auto-lirpa.readthedocs.io/en/latest/?badge=latest)
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](http://PaperCode.cc/AutoLiRPA-Demo)
-[![Video Introduction](https://img.shields.io/badge/play-video-red.svg)](http://PaperCode.cc/AutoLiRPA-Video)
-[![BSD license](https://img.shields.io/badge/License-BSD-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
+This project implements intermediate layer perturbation analysis for Deep Neural Networks using **auto_LiRPA** (Linear Relaxation-based Perturbation Analysis) combined with **SCALE-Sim** fault simulation to study the impact of hardware faults on neural network robustness.
 
-<p align="center">
-<a href="http://PaperCode.cc/AutoLiRPA-Video"><img src="http://www.huan-zhang.com/images/upload/lirpa/auto_lirpa_2.png" width="45%" height="45%" float="left"></a>
-<a href="http://PaperCode.cc/AutoLiRPA-Video"><img src="http://www.huan-zhang.com/images/upload/lirpa/auto_lirpa_1.png" width="45%" height="45%" float="right"></a>
-</p>
+## 📌 Project Overview
 
-## What's New?
+We extend [auto_LiRPA](https://github.com/Verified-Intelligence/auto_LiRPA) to support **perturbations on intermediate layers** rather than just input layers, enabling analysis of how faults in systolic array hardware affect neural network inference.
 
-- [α,β-CROWN](https://github.com/Verified-Intelligence/alpha-beta-CROWN.git) (using `auto_LiRPA` as its core library) is the winner of [VNN-COMP 2024](https://sites.google.com/view/vnn2024). Our tool is **ranked top-1** in all benchmarks (including 12 [regular track](https://github.com/ChristopherBrix/vnncomp2024_results/blob/main/SCORING/latex/results_regular_track.pdf) and 9 [extended track](https://github.com/ChristopherBrix/vnncomp2024_results/blob/main/SCORING/latex/results_extended_track.pdf) benchmarks). (08/2024)
-- The [INVPROP algorithm](https://arxiv.org/pdf/2302.01404.pdf) allows to compute overapproximationsw of preimages (the set of inputs of an NN generating a given output set) and tighten bounds using output constraints. (03/2024)
-- Branch-and-bound support for non-ReLU and general nonlinearities ([GenBaB](https://arxiv.org/pdf/2405.21063)) with optimizable bounds (α-CROWN) for new nonlinear functions (sin, cos, GeLU). We achieve significant improvements on verifying neural networks with non-ReLU nonlinearities such as Transformers, LSTM, and [ML4ACOPF](https://github.com/AI4OPT/ml4acopf_benchmark). (09/2023)
-- [α,β-CROWN](https://github.com/Verified-Intelligence/alpha-beta-CROWN.git) ([alpha-beta-CROWN](https://github.com/Verified-Intelligence/alpha-beta-CROWN.git)) (using `auto_LiRPA` as its core library) **won** [VNN-COMP 2023](https://sites.google.com/view/vnn2023). (08/2023)
-- Bound computation for higher-order computational graphs to support bounding Jacobian, Jacobian-vector products, and [local Lipschitz constants](https://arxiv.org/abs/2210.07394). (11/2022)
-- Our neural network verification tool [α,β-CROWN](https://github.com/Verified-Intelligence/alpha-beta-CROWN.git) ([alpha-beta-CROWN](https://github.com/Verified-Intelligence/alpha-beta-CROWN.git)) (using `auto_LiRPA` as its core library) **won** [VNN-COMP 2022](https://sites.google.com/view/vnn2022). Our library supports the large CIFAR100, TinyImageNet and ImageNet models in VNN-COMP 2022. (09/2022)
-- Implementation of **general cutting planes** ([GCP-CROWN](https://arxiv.org/pdf/2208.05740.pdf)), support of more activation functions and improved performance and scalability. (09/2022)
-- Our neural network verification tool [α,β-CROWN](https://github.com/Verified-Intelligence/alpha-beta-CROWN.git) ([alpha-beta-CROWN](https://github.com/Verified-Intelligence/alpha-beta-CROWN.git)) **won** [VNN-COMP 2021](https://sites.google.com/view/vnn2021) **with the highest total score**, outperforming 11 SOTA verifiers. α,β-CROWN uses the `auto_LiRPA` library as its core bound computation library. (09/2021)
-- [Optimized CROWN/LiRPA](https://arxiv.org/pdf/2011.13824.pdf) bound (α-CROWN) for ReLU, **sigmoid**, **tanh**, and **maxpool** activation functions, which can significantly outperform regular CROWN bounds. See [simple_verification.py](examples/vision/simple_verification.py#L59) for an example. (07/31/2021)
-- Handle split constraints for ReLU neurons ([β-CROWN](https://arxiv.org/pdf/2103.06624.pdf)) for complete verifiers. (07/31/2021)
-- A memory efficient GPU implementation of backward (CROWN) bounds for
-convolutional layers. (10/31/2020)
-- Certified defense models for downscaled ImageNet, TinyImageNet, CIFAR-10, LSTM/Transformer. (08/20/2020)
-- Adding support to **complex vision models** including DenseNet, ResNeXt and WideResNet. (06/30/2020)
-- **Loss fusion**, a technique that reduces training cost of tight LiRPA bounds
-(e.g. CROWN-IBP) to the same asymptotic complexity of IBP, making LiRPA based certified
-defense scalable to large datasets (e.g., TinyImageNet, downscaled ImageNet). (06/30/2020)
-- **Multi-GPU** support to scale LiRPA based training to large models and datasets. (06/30/2020)
-- Initial release. (02/28/2020)
+### Key Features
 
-## Introduction
+- ✅ **Intermediate Layer Perturbation**: Apply controlled perturbations to any intermediate layer output
+- ✅ **Element-wise Epsilon**: Different perturbation magnitudes for different tensor elements
+- ✅ **CROWN Backward Bounds**: Compute tight output bounds from perturbed intermediate layers
+- ✅ **Fault Simulation Integration**: Parse SCALE-Sim fault simulation results and analyze their impact
+- ✅ **GTSRB Traffic Sign Recognition**: Case study on German Traffic Sign Recognition Benchmark
 
-`auto_LiRPA` is a library for automatically deriving and computing bounds with
-linear relaxation based perturbation analysis (LiRPA) (e.g.
-[CROWN](https://arxiv.org/pdf/1811.00866.pdf) and
-[DeepPoly](https://files.sri.inf.ethz.ch/website/papers/DeepPoly.pdf)) for
-neural networks, which is a useful tool for formal robustness verification. We
-generalize existing LiRPA algorithms for feed-forward neural networks to a
-graph algorithm on general computational graphs, defined by PyTorch.
-Additionally, our implementation is also automatically **differentiable**,
-allowing optimizing network parameters to shape the bounds into certain
-specifications (e.g., certified defense). You can find [a video ▶️ introduction
-here](http://PaperCode.cc/AutoLiRPA-Video).
+## 🔗 Source Attribution
 
-Our library supports the following algorithms:
+This project is built upon and extends the following open-source projects:
 
-* Backward mode LiRPA bound propagation ([CROWN](https://arxiv.org/pdf/1811.00866.pdf)/[DeepPoly](https://files.sri.inf.ethz.ch/website/papers/DeepPoly.pdf))
-* Backward mode LiRPA bound propagation with optimized bounds ([α-CROWN](https://arxiv.org/pdf/2011.13824.pdf))
-* Backward mode LiRPA bound propagation with split constraints ([β-CROWN](https://arxiv.org/pdf/2103.06624.pdf) for ReLU, and [GenBaB](https://arxiv.org/pdf/2405.21063) for general nonlinear functions)
-* Generalized backward mode LiRPA bound propagation with general cutting plane constraints ([GCP-CROWN](https://arxiv.org/pdf/2208.05740.pdf))
-* Backward mode LiRPA bound propagation with bounds tightened using output constraints ([INVPROP](https://arxiv.org/pdf/2302.01404.pdf))
-* Generalized backward mode LiRPA bound propagation for higher-order computational graphs  ([Shi et al., 2022](https://arxiv.org/abs/2210.07394))
-* Forward mode LiRPA bound propagation ([Xu et al., 2020](https://arxiv.org/pdf/2002.12920))
-* Forward mode LiRPA bound propagation with optimized bounds (similar to [α-CROWN](https://arxiv.org/pdf/2011.13824.pdf))
-* Interval bound propagation ([IBP](https://arxiv.org/pdf/1810.12715.pdf))
-* Hybrid approaches, e.g., Forward+Backward, IBP+Backward ([CROWN-IBP](https://arxiv.org/pdf/1906.06316.pdf)), [α,β-CROWN](https://github.com/Verified-Intelligence/alpha-beta-CROWN.git) ([alpha-beta-CROWN](https://github.com/Verified-Intelligence/alpha-beta-CROWN.git))
-* MIP/LP formulation of neural networks
+### 1. auto_LiRPA
+- **Source**: [https://github.com/Verified-Intelligence/auto_LiRPA](https://github.com/Verified-Intelligence/auto_LiRPA)
+- **License**: BSD 3-Clause License
+- **Usage**: Core bound propagation engine (CROWN, IBP)
+- **Our Modifications**: Extended to support intermediate layer perturbations with element-wise epsilon
 
-Our library allows automatic bound derivation and computation for general
-computational graphs, in a similar manner that gradients are obtained in modern
-deep learning frameworks -- users only define the computation in a forward
-pass, and `auto_LiRPA` traverses through the computational graph and derives
-bounds for any nodes on the graph.  With `auto_LiRPA` we free users from
-deriving and implementing LiPRA for most common tasks, and they can simply
-apply LiPRA as a tool for their own applications.  This is especially useful
-for users who are not experts of LiRPA and cannot derive these bounds manually
-(LiRPA is significantly more complicated than backpropagation).
+### 2. SCALE-Sim
+- **Source**: [https://github.com/ARM-software/SCALE-Sim](https://github.com/ARM-software/SCALE-Sim)
+- **License**: MIT License
+- **Usage**: Systolic array fault injection simulation
+- **Our Modifications**: Integrated fault simulation results for DNN robustness analysis
 
-## Technical Background in 1 Minute
+### 3. GTSRB Dataset
+- **Source**: [German Traffic Sign Recognition Benchmark](https://benchmark.ini.rub.de/)
+- **License**: Creative Commons Attribution-NonCommercial-ShareAlike 4.0
+- **Usage**: Training and evaluation dataset
 
-Deep learning frameworks such as PyTorch represent neural networks (NN) as
-a computational graph, where each mathematical operation is a node and edges
-define the flow of computation:
+## 📁 Repository Structure
 
-<p align="center">
-<a href="http://PaperCode.cc/AutoLiRPA-Video"><img src="http://www.huan-zhang.com/images/upload/lirpa/auto_LiRPA_background_1.png" width="80%"></a>
-</p>
+```
+auto_LiRPA_CLAUDE/
+├── gtsrb_small_tensor_project/          # Our implementation
+│   ├── intermediate_bound_module_v2.py  # Extended auto_LiRPA module
+│   ├── main_interactive.py              # Interactive testing interface
+│   ├── sca_au.py                        # Automated fault analysis
+│   ├── traffic_sign_net_small.py        # Smaller CNN model (16/32/64 channels)
+│   └── checkpoints/                     # Model checkpoints (download separately)
+│
+├── scalesim_fault_simulator/            # Modified SCALE-Sim
+│   ├── fault_injection.py               # Fault injection logic
+│   └── configs/                         # Systolic array configurations
+│
+├── README.md                            # This file
+└── .gitignore                           # Git ignore configuration
+```
 
-Normally, the inputs of a computation graph (which defines a NN) are data and
-model weights, and PyTorch goes through the graph and produces model prediction
-(a bunch of numbers):
+**Note**: The following directories are excluded from this repository (users must clone them separately):
+- `auto_LiRPA/` - Original auto_LiRPA library
+- `gtsrb_project/` - Original GTSRB training code
+- `systolic_fault_sim/` - Original systolic array simulation
 
-<p align="center">
-<a href="http://PaperCode.cc/AutoLiRPA-Video"><img src="http://www.huan-zhang.com/images/upload/lirpa/auto_LiRPA_background_2.png" width="80%"></a>
-</p>
+## 🚀 Installation
 
-Our `auto_LiRPA` library conducts perturbation analysis on a computational
-graph, where the input data and model weights are defined within some
-user-defined ranges.  We get guaranteed output ranges (bounds):
+### Prerequisites
 
-<p align="center">
-<a href="http://PaperCode.cc/AutoLiRPA-Video"><img src="http://www.huan-zhang.com/images/upload/lirpa/auto_LiRPA_background_3.png" width="80%"></a>
-</p>
+- Python 3.8+
+- PyTorch 1.12+
+- CUDA (optional, for GPU acceleration)
 
-## Installation
-
-Python 3.11+ and PyTorch 2.0+ are required.
-It is highly recommended to have a pre-installed PyTorch
-that matches your system and our version requirement
-(see [PyTorch Get Started](https://pytorch.org/get-started)).
-Then you can install `auto_LiRPA` via:
+### Step 1: Clone this repository
 
 ```bash
-git clone https://github.com/Verified-Intelligence/auto_LiRPA
+git clone <your-repository-url>
+cd auto_LiRPA_CLAUDE
+```
+
+### Step 2: Clone required source repositories
+
+```bash
+# Clone auto_LiRPA
+git clone https://github.com/Verified-Intelligence/auto_LiRPA.git
+
+# Clone SCALE-Sim (if needed for full fault simulation)
+git clone https://github.com/ARM-software/SCALE-Sim.git systolic_fault_sim
+```
+
+### Step 3: Create Python environment
+
+```bash
+python3 -m venv gtsrb_env
+source gtsrb_env/bin/activate  # On Windows: gtsrb_env\Scripts\activate
+```
+
+### Step 4: Install dependencies
+
+```bash
+# Install auto_LiRPA
 cd auto_LiRPA
-pip install .
+pip install -e .
+cd ..
+
+# Install PyTorch (adjust CUDA version as needed)
+pip install torch torchvision
+
+# Install other dependencies
+pip install numpy pandas matplotlib pillow
 ```
 
-If you intend to modify this library, use `pip install -e .` instead.
+### Step 5: Download GTSRB dataset
 
-## Quick Start
-
-First define your computation as a `nn.Module` and wrap it using
-`auto_LiRPA.BoundedModule()`. Then, you can call the `compute_bounds` function
-to obtain certified lower and upper bounds under input perturbations:
-
-```python
-from auto_LiRPA import BoundedModule, BoundedTensor, PerturbationLpNorm
-
-# Define computation as a nn.Module.
-class MyModel(nn.Module):
-    def forward(self, x):
-        # Define your computation here.
-
-model = MyModel()
-my_input = load_a_batch_of_data()
-# Wrap the model with auto_LiRPA.
-model = BoundedModule(model, my_input)
-# Define perturbation. Here we add Linf perturbation to input data.
-ptb = PerturbationLpNorm(norm=np.inf, eps=0.1)
-# Make the input a BoundedTensor with the pre-defined perturbation.
-my_input = BoundedTensor(my_input, ptb)
-# Regular forward propagation using BoundedTensor works as usual.
-prediction = model(my_input)
-# Compute LiRPA bounds using the backward mode bound propagation (CROWN).
-lb, ub = model.compute_bounds(x=(my_input,), method="backward")
+```bash
+# Download from https://benchmark.ini.rub.de/
+# Extract to gtsrb_project/GTSRB/
+mkdir -p gtsrb_project/GTSRB
+# ... extract dataset here ...
 ```
 
-Checkout
-[examples/vision/simple_verification.py](examples/vision/simple_verification.py)
-for a complete but very basic example.
+### Step 6: Download model checkpoint (if available)
 
-<a href="http://PaperCode.cc/AutoLiRPA-Demo"><img align="left" width=64 height=64 src="https://colab.research.google.com/img/colab_favicon_256px.png"></a>
-We also provide a [Google Colab Demo](http://PaperCode.cc/AutoLiRPA-Demo) including an example of computing verification
-bounds for a 18-layer ResNet model on CIFAR-10 dataset. Once the ResNet model
-is defined as usual in Pytorch, obtaining provable output bounds is as easy as
-obtaining gradients through autodiff. Bounds are efficiently computed on GPUs.
+Download the pre-trained model checkpoint and place it in:
+```
+gtsrb_small_tensor_project/checkpoints/traffic_sign_net_full.pth
+```
 
-## More Working Examples
+## 💡 Usage
 
-We provide [a wide range of examples](doc/src/examples.md) of using `auto_LiRPA`:
+### Interactive Mode
 
-* [Basic Bound Computation on a Toy Neural Network (simplest example)](examples/simple/toy.py)
-* [Basic Bound Computation with **Robustness Verification** of Neural Networks as an example](doc/src/examples.md#basic-bound-computation-and-robustness-verification-of-neural-networks)
-* [MIP/LP Formulation of Neural Networks](examples/simple/mip_lp_solver.py)
-* [Basic **Certified Adversarial Defense** Training](doc/src/examples.md#basic-certified-adversarial-defense-training)
-* [Large-scale Certified Defense Training on **ImageNet**](doc/src/examples.md#certified-adversarial-defense-on-downscaled-imagenet-and-tinyimagenet-with-loss-fusion)
-* [Certified Adversarial Defense Training on Sequence Data with **LSTM**](doc/src/examples.md#certified-adversarial-defense-training-for-lstm-on-mnist)
-* [Certifiably Robust Language Classifier using **Transformers**](doc/src/examples.md#certifiably-robust-language-classifier-with-transformer-and-lstm)
-* [Certified Robustness against **Model Weight Perturbations**](doc/src/examples.md#certified-robustness-against-model-weight-perturbations-and-certified-defense)
-* [Bounding **Jacobian** and **local Lipschitz constants**](examples/vision/jacobian.py)
-* [Compute an Overapproximate of Neural Network **Preimage**](examples/simple/invprop.py)
+Run the interactive testing script to manually select layers and perturbation regions:
 
-`auto_LiRPA` has also been used in the following works:
-* [**α,β-CROWN for complete neural network verification**](https://github.com/Verified-Intelligence/alpha-beta-CROWN)
-* [**Fast certified robust training**](https://github.com/shizhouxing/Fast-Certified-Robust-Training)
-* [**Computing local Lipschitz constants**](https://github.com/shizhouxing/Local-Lipschitz-Constants)
+```bash
+cd gtsrb_small_tensor_project
+python main_interactive.py --device cpu
+```
 
-## Full Documentations
+**Interactive workflow:**
+1. Select a test image from GTSRB dataset
+2. Choose intermediate layer to perturb (e.g., `conv6`)
+3. Specify perturbation region:
+   - **Option 1**: Entire layer
+   - **Option 2**: Specific channels
+   - **Option 3**: Specific region (channels + spatial coordinates)
+   - **Option 4**: Exact mask (load from file)
+4. View computed bounds and robustness analysis
 
-For more documentations, please refer to:
+### Automated Fault Analysis Mode
 
-* [Documentation homepage](https://auto-lirpa.readthedocs.io)
-* [API documentation](https://auto-lirpa.readthedocs.io/en/latest/api.html)
-* [Adding custom operators](https://auto-lirpa.readthedocs.io/en/latest/custom_op.html)
-* [Guide](https://auto-lirpa.readthedocs.io/en/latest/paper.html) for reproducing [our NeurIPS 2020 paper](https://arxiv.org/abs/2002.12920)
+Parse SCALE-Sim fault simulation results and automatically analyze their impact:
 
-## Publications
+```bash
+cd gtsrb_small_tensor_project
+python sca_au.py --device cpu
+```
 
-Please kindly cite our papers if you use the `auto_LiRPA` library. Full [BibTeX entries](doc/src/examples.md#bibtex-entries) can be found [here](doc/src/examples.md#bibtex-entries).
+**Automated workflow:**
+1. Load fault simulation result file
+2. Parse affected elements from fault injection
+3. Automatically create perturbation specification
+4. Compute bounds with CROWN backward
+5. Generate robustness analysis report
 
-The general LiRPA based bound propagation algorithm was originally proposed in our paper:
+## 🔬 Technical Details
 
-* [Automatic Perturbation Analysis for Scalable Certified Robustness and Beyond](https://arxiv.org/pdf/2002.12920).
-NeurIPS 2020.
-Kaidi Xu\*, Zhouxing Shi\*, Huan Zhang\*, Yihan Wang, Kai-Wei Chang, Minlie Huang, Bhavya Kailkhura, Xue Lin, Cho-Jui Hsieh (\* Equal contribution)
+### Our Approach: Element-wise Epsilon Perturbation
 
-The `auto_LiRPA` library is further extended to support:
+Unlike standard auto_LiRPA which applies uniform perturbations to input layers, our implementation supports **element-wise epsilon** on intermediate layers:
 
-* Optimized bounds (α-CROWN):
+1. **Forward Pass (Clean)**: Input → Intermediate Layer
+   ```python
+   with torch.no_grad():
+       intermediate_output = model.forward_to_layer(x, target_layer)
+   ```
 
-  [Fast and Complete: Enabling Complete Neural Network Verification with Rapid and Massively Parallel Incomplete Verifiers](https://arxiv.org/pdf/2011.13824.pdf). ICLR 2021. Kaidi Xu\*, Huan Zhang\*, Shiqi Wang, Yihan Wang, Suman Jana, Xue Lin and Cho-Jui Hsieh (\* Equal contribution).
+2. **Create Epsilon Tensor**: Each element has its own epsilon value
+   ```python
+   eps_tensor = torch.zeros_like(intermediate_output)
+   eps_tensor[selected_elements] = user_epsilon  # User-specified epsilon
+   eps_tensor[other_elements] = 0.0              # No perturbation
+   ```
 
-* Split constraints (β-CROWN):
+3. **Compute Bounds**: Apply CROWN backward from intermediate layer
+   ```python
+   lower = intermediate_output - eps_tensor
+   upper = intermediate_output + eps_tensor
+   lb, ub = lirpa_model.compute_bounds(
+       x=None,
+       method='backward',
+       interm_bounds={target_layer: (lower, upper)}
+   )
+   ```
 
-  [Beta-CROWN: Efficient Bound Propagation with Per-neuron Split Constraints for Complete and Incomplete Neural Network Verification](https://arxiv.org/pdf/2103.06624.pdf). NeurIPS 2021. Shiqi Wang\*, Huan Zhang\*, Kaidi Xu\*, Suman Jana, Xue Lin, Cho-Jui Hsieh and Zico Kolter (\* Equal contribution).
+This approach allows us to model hardware faults that affect specific elements in a layer's output tensor.
 
-* General constraints (GCP-CROWN):
+### Key Modifications to auto_LiRPA
 
-  [GCP-CROWN: General Cutting Planes for Bound-Propagation-Based Neural Network Verification](https://arxiv.org/abs/2208.05740). Huan Zhang\*, Shiqi Wang\*, Kaidi Xu\*, Linyi Li, Bo Li, Suman Jana, Cho-Jui Hsieh and Zico Kolter (\* Equal contribution).
+**File**: `gtsrb_small_tensor_project/intermediate_bound_module_v2.py`
 
-* Higher-order computational graphs (Lipschitz constants and Jacobian):
+- **`IntermediateBoundedModuleV2`**: Extended `BoundedModule` class
+  - `set_intermediate_perturbation()`: Register perturbation for a specific layer
+  - `compute_bounds_from_intermediate()`: Compute bounds starting from perturbed intermediate layer
+  - `compute_perturbed_bounds()`: Convenient wrapper with automatic perturbation creation
 
-  [Efficiently Computing Local Lipschitz Constants of Neural Networks via Bound Propagation](https://arxiv.org/abs/2210.07394). NeurIPS 2022. Zhouxing Shi, Yihan Wang, Huan Zhang, Zico Kolter, Cho-Jui Hsieh.
+**File**: `masked_perturbation.py` (in gtsrb_project, shared)
 
-* Branch-and-bound for non-ReLU and general nonlinear functions (GenBaB):
+- **`MaskedPerturbationLpNorm`**: Extended `PerturbationLpNorm`
+  - `_create_epsilon_tensor()`: Create element-wise epsilon tensor
+  - `get_input_bounds()`: Return bounds with element-wise epsilon applied
 
-  [Neural Network Verification with Branch-and-Bound for General Nonlinearities](https://arxiv.org/pdf/2405.21063). TACAS 2025. Zhouxing Shi\*, Qirui Jin\*, Zico Kolter, Suman Jana, Cho-Jui Hsieh, Huan Zhang (\* Equal contribution).
+### Model Architecture
 
-* Tightening of bounds and preimage computation using the INVPROP algorithm:
+**TrafficSignNetSmall**: Smaller CNN for faster verification
+```
+Input (3×32×32)
+├── Conv1: 3→16, 3×3 + ReLU + MaxPool → (16×16×16)
+├── Conv2: 16→32, 3×3 + ReLU + MaxPool → (32×8×8)
+├── Conv6: 32→64, 3×3 + ReLU → (64×8×8)  ← Perturbation target
+├── Flatten → (4096)
+└── FC: 4096→43 (classes)
+```
 
-  [Provably Bounding Neural Network Preimages](https://arxiv.org/pdf/2302.01404.pdf). NeurIPS 2023. Suhas Kotha\*, Christopher Brix\*, Zico Kolter, Krishnamurthy (Dj) Dvijotham\*\*, Huan Zhang\*\* (\* Equal contribution; \*\* Equal advising).
+## 📊 Example Results
 
-Certified training (verification-aware training by optimizing bounds) using `auto_LiRPA` is improved with:
+### Perturbation on Conv6 Layer
 
-* Much shorter warmup schedule and faster training:
+```
+Layer: /features/features.9/Conv
+Shape: (1, 64, 8, 8)
+Perturbed region: Channels [1, 9], Spatial [1:8, 1:8]
+Epsilon: 0.5
 
-  [Fast Certified Robust Training with Short Warmup](https://arxiv.org/pdf/2103.17268.pdf). NeurIPS 2021. Zhouxing Shi\*, Yihan Wang\*, Huan Zhang, Jinfeng Yi and Cho-Jui Hsieh (\* Equal contribution).
+Clean prediction: Class 13 (Yield sign)
+Lower bounds: Class 13 = 8.234
+Upper bounds: Class 13 = 12.456
+Robustness margin: 4.222
 
-* Training-time branch-and-bound:
+Verdict: ROBUST (prediction unchanged under perturbation)
+```
 
-  [Certified Training with Branch-and-Bound: A Case Study on Lyapunov-stable Neural Control](https://arxiv.org/abs/2411.18235). Zhouxing Shi, Cho-Jui Hsieh, and Huan Zhang.
+## 🐛 Troubleshooting
 
+### Common Issues
 
-## Developers and Copyright
+1. **"Module 'intermediate_bound_module_v2' has no attribute 'XXX'"**
+   - Clear Python cache: `rm -rf __pycache__`
+   - Restart Python interpreter
 
-Team lead:
-* Huan Zhang (huan@huan-zhang.com), UIUC
+2. **"The size of tensor a (4096) must match the size of tensor b (8)"**
+   - This error should be fixed in V2 implementation
+   - If it persists, check that you're using `intermediate_bound_module_v2.py`
 
-Current developers:
-* Zhouxing Shi (zhouxingshichn@gmail.com), UCLA (Student Lead)
-* Xiangru Zhong (xiangruzh0915@gmail.com), UIUC
-* Jorge Chavez (jorgejc2@illinois.edu), UIUC
-* Duo Zhou (duozhou2@illinois.edu), UIUC
-* Christopher Brix (brix@cs.rwth-aachen.de), RWTH Aachen University
-* Keyi Shen (keyis2@illinois.edu), UIUC
-* Hongji Xu (hx84@duke.edu), Duke University (intern with Prof. Huan Zhang)
-* Kaidi Xu (kx46@drexel.edu), Drexel University
-* Hao Chen (haoc8@illinois.edu), UIUC
-* Keyu Lu (keyulu2@illinois.edu), UIUC
+3. **Out of Memory (OOM)**
+   - Use GPU: `--device cuda`
+   - Reduce perturbation region size
+   - Use smaller model
 
-Past developers:
-* Sanil Chawla (schawla7@illinois.edu), UIUC
-* Linyi Li (linyi2@illinois.edu), UIUC
-* Zhuolin Yang (zhuolin5@illinois.edu), UIUC
-* Zhuowen Yuan (realzhuowen@gmail.com), UIUC
-* Qirui Jin (qiruijin@umich.edu), University of Michigan
-* Shiqi Wang (sw3215@columbia.edu), Columbia University
-* Yihan Wang (yihanwang@ucla.edu), UCLA
-* Jinqi (Kathryn) Chen (jinqic@cs.cmu.edu), CMU
+## 📝 Citation
 
-We thank the [commits](https://github.com/Verified-Intelligence/auto_LiRPA/commits) and [pull requests](https://github.com/Verified-Intelligence/auto_LiRPA/pulls) from community contributors.
+If you use this code in your research, please cite the original auto_LiRPA paper:
 
-Our library is released under the BSD 3-Clause license.
+```bibtex
+@inproceedings{xu2020automatic,
+  title={Automatic perturbation analysis for scalable certified robustness and beyond},
+  author={Xu, Kaidi and Shi, Zhouxing and Zhang, Huan and Wang, Yihan and Chang, Kai-Wei and Huang, Minlie and Kailkhura, Bhavya and Lin, Xue and Hsieh, Cho-Jui},
+  booktitle={Advances in Neural Information Processing Systems},
+  year={2020}
+}
+```
+
+And SCALE-Sim:
+
+```bibtex
+@inproceedings{samajdar2018scale,
+  title={SCALE-Sim: Systolic CNN accelerator simulator},
+  author={Samajdar, Ananda and Zhu, Yuhao and Whatmough, Paul and Mattina, Matthew and Krishna, Tushar},
+  booktitle={IEEE International Symposium on Performance Analysis of Systems and Software},
+  year={2018}
+}
+```
+
+## 📧 Contact
+
+For questions or issues, please open an issue on GitHub or contact the authors.
+
+## 📄 License
+
+This project extends BSD-licensed (auto_LiRPA) and MIT-licensed (SCALE-Sim) software.
+
+**Our modifications** are provided as-is for research purposes. Please refer to the original licenses for auto_LiRPA and SCALE-Sim for their respective terms.
+
+## 🙏 Acknowledgments
+
+- **auto_LiRPA team** for the excellent neural network verification library
+- **SCALE-Sim team** for the systolic array simulator
+- **GTSRB dataset creators** for the traffic sign recognition benchmark
